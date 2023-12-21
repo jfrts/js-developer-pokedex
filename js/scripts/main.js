@@ -10,6 +10,8 @@ const cardPokemon = document.querySelectorAll('.js-open-details-pokemon');
 const btnCloseModal = document.querySelector('.js-close-modal-details-pokemon');
 const countPokemons = document.getElementById('js-count-pokemons');
 
+console.log(cardPokemon);
+
 cardPokemon.forEach(card => {
     card.addEventListener('click', openDetailsPokemon);
 })
@@ -73,7 +75,7 @@ function buildPokemonCard(pokemon) {
 }
 
 const button = document.getElementById("js-btn-load-more");
-let offsetCount = 10;
+let offsetCount = 9;
 
 function loadMore(url) {
     listingPokemons(`https://pokeapi.co/api/v2/pokemon?limit=9&offset=${offsetCount}`);
@@ -91,6 +93,27 @@ async function listingPokemons(url) {
     }
 }
 
+function buildTypeFilterButton(type) {
+    const typeButtonHTML = `<li>
+        <button class="type-filter ${type}" code-type="">
+            <div class="icon">
+            <img src="img/icon-types/${type}.svg" alt="">
+            </div>
+            <span>${type}</span>
+        </button>
+    </li>`;
+    return typeButtonHTML;
+}
+
+//https://pokeapi.co/api/v2/type
+async function listingTypes() {
+    const { results: types } = await getAxios("https://pokeapi.co/api/v2/type");
+    for (const type of types) {
+        const typeFilterElement = buildTypeFilterButton(type.name);
+        concatInnerHTML("js-type-area", typeFilterElement);
+    }
+}
+listingTypes();
 
 getPokemonsTotalCount();
-// listingPokemons("https://pokeapi.co/api/v2/pokemon?limit=9&offset=0");
+listingPokemons("https://pokeapi.co/api/v2/pokemon?limit=9&offset=0");
