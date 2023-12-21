@@ -375,6 +375,9 @@ ul {
   justify-content: space-between;
   padding: 0 2.8rem;
 }
+.card-pokemon .info .text h3 {
+  text-transform: capitalize;
+}
 .card-pokemon .info .text span {
   text-align: left;
   display: block;
