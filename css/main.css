@@ -674,6 +674,7 @@ ul {
   line-height: 3.4rem;
   letter-spacing: -0.01em;
   color: #2F3133;
+  text-transform: capitalize;
 }
 .modal .box .right-container .name span {
   font-family: "Montserrat", sans-serif;

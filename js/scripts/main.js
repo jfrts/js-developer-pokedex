@@ -60,21 +60,30 @@ async function getPokemonsTotalCount(url) {
 }
 
 function buildPokemonCard(pokemon) {
+    const element = document.createElement("div");
     const cardHtml = `<button class="card-pokemon ${pokemon.types[0].type.name} js-open-details-pokemon">
-    <div class="image">
-      <img src="${pokemon.sprites.other.dream_world.front_default}" class="thumb-img">
-    </div>
-    <div class="info">
-      <div class="text">
-        <span>#${String(pokemon.id).padStart(3, '0')}</span>
-        <h3>${pokemon.name}</h2>
-      </div>
-      <div class="icon">
-        <img src="img/icon-types/${pokemon.types[0].type.name}.svg">
-      </div>
-    </div>
-  </button>`;
-    return cardHtml;
+        <div class="image">
+        <img src="${pokemon.sprites.other.dream_world.front_default}" class="thumb-img">
+        </div>
+        <div class="info">
+        <div class="text">
+            <span>#${String(pokemon.id).padStart(3, '0')}</span>
+            <h3>${pokemon.name}</h2>
+        </div>
+        <div class="icon">
+            <img src="img/icon-types/${pokemon.types[0].type.name}.svg">
+        </div>
+        </div>
+    </button>`;
+    element.innerHTML = cardHtml;
+    element.addEventListener("click", async () => {
+        const pokemonData = await getAxios(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`);
+        const pokemonModal = buildPokemonModalInfo(pokemonData);
+        const footerElement = document.querySelector('footer');
+        footerElement.insertAdjacentHTML('afterend', pokemonModal);
+        openDetailsPokemon();
+    });
+    return element;
 }
 
 const button = document.getElementById("js-btn-load-more");
@@ -90,11 +99,10 @@ button.addEventListener("click", loadMore);
 async function listingPokemons(url) {
     const { results: listPokemons } = await getAxios(url);
     const jsListPokemons = document.getElementById("js-list-pokemons");
-    jsListPokemons.innerHTML = "";
     for (const pokemon of listPokemons) {
         const pokemonDetails = await getAxios(pokemon.url);
         const pokemonCard = buildPokemonCard(pokemonDetails);
-        concatInnerHTML("js-list-pokemons", pokemonCard);
+        jsListPokemons.appendChild(pokemonCard);
     }
 }
 
@@ -106,7 +114,7 @@ async function listingPokemonsByType(id) {
     for (const { pokemon } of listPokemons) {
         const pokemonDetails = await getAxios(pokemon.url);
         const pokemonCard = buildPokemonCard(pokemonDetails);
-        concatInnerHTML("js-list-pokemons", pokemonCard);
+        jsListPokemons.appendChild(pokemonCard);
     }
 }
 
@@ -120,7 +128,6 @@ function buildTypeFilterButton({ name, id }) {
     </button>`;
     element.innerHTML = typeButtonHTML;
     element.addEventListener("click", () => {
-        console.log("clicouuuu");
         listingPokemonsByType(id);
     });
     return element;
@@ -165,7 +172,7 @@ async function searchPokemonByNameOrId(nameOrId) {
 }
 
 function handleSearchSubmit() {
-    const input = document.getElementById("js-input-search"); 
+    const input = document.getElementById("js-input-search");
     input.addEventListener("keypress", (event) => {
         const inputValue = String(input.value).toLocaleLowerCase().trim();
         if (event.key === "Enter") {
@@ -177,6 +184,164 @@ function handleSearchSubmit() {
             }
         }
     })
+}
+
+function buildPokemonModalInfo(pokemon) {
+    const modal = document.createElement('div');
+    modal.classList.add('modal');
+    modal.setAttribute('type-pokemon-modal', pokemon.types[0].type.name);
+    modal.setAttribute('id', 'js-modal-details');
+    document.body.insertBefore(modal, document.querySelector('script'));
+
+    const overlay = document.createElement('div');
+    overlay.classList.add('overlay');
+    modal.appendChild(overlay);
+    
+    const box = document.createElement('div');
+    box.classList.add('box');
+    modal.appendChild(box);
+
+    const closeButton = document.createElement('button');
+    closeButton.classList.add('close', 'js-close-modal-details-pokemon');
+    closeButton.innerHTML = `<svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14.25 4.75L4.75 14.25" stroke="#4D5053" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4.75 4.75L14.25 14.25" stroke="#4D5053" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+    closeButton.addEventListener('click', closeDetailsPokemon);
+    box.appendChild(closeButton);
+
+    const leftContent = `<div class="left-container">
+        <div class="icon">
+            <img src="img/icon-types/${pokemon.types[0].type.name}.svg" id="js-image-type-modal" alt="">
+        </div>
+        <div class="image">
+            <img src="${pokemon.sprites.other.dream_world.front_default}" alt="" id="js-image-pokemon-modal">
+        </div>
+    </div>`;
+
+    const types = pokemon.types;
+    const typesElementList = types.map(({ type }) => `<li>
+    <span class="tag-type ${type.name}">${type.name}</span>
+    </li>`);
+    
+    console.log(pokemon);
+
+    const rightContent = `<div class="right-container">
+        <div class="name">
+            <h2 id="js-name-pokemon-modal">${pokemon.name}</h2>
+            <span id="js-code-pokemon-modal">#${String(pokemon.id).padStart(3, '0')}</span>
+        </div>
+        <ul class="type" id="js-types-pokemon">
+            ${ typesElementList }
+        </ul>
+        <ul class="info">
+            <li>
+                <span>Height</span>
+                <strong id="js-height-pokemon">${pokemon.height}</strong>
+            </li>
+            <li>
+                <span>Weight</span>
+                <strong id="js-weight-pokemon">${pokemon.weight}</strong>
+            </li>
+            <li>
+                <span>Abilities</span>
+                <strong id="js-main-abilities">Overgrow</strong>
+            </li>
+        </ul>
+        <div class="weak">
+            <h4>Weaknesses</h4>
+            <ul id="js-area-weak">
+                <li>
+                    <span class="tag-type water">Water</span>
+                </li>
+                <li>
+                    <span class="tag-type electric">Electric</span>
+                </li>
+            </ul>
+        </div>
+        <div class="stats">
+            <h5>Stats</h5>
+            <div class="all">
+                <div class="item">
+                    <span>HP</span>
+                    <div class="bar-status">
+                        <div class="bar" id="js-stats-hp"></div>
+                        <ul class="separator">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="item">
+                    <span>Attack</span>
+                    <div class="bar-status">
+                        <div class="bar" id="js-stats-attack"></div>
+                        <ul class="separator">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="item">
+                    <span>Defense</span>
+                    <div class="bar-status">
+                        <div class="bar" id="js-stats-defense"></div>
+                        <ul class="separator">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="item">
+                    <span>Sp. attack</span>
+                    <div class="bar-status">
+                        <div class="bar" id="js-stats-sp-attack"></div>
+                        <ul class="separator">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="item">
+                    <span>Sp. defense</span>
+                    <div class="bar-status">
+                        <div class="bar" id="js-stats-sp-defense"></div>
+                        <ul class="separator">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="item">
+                    <span>Speed</span>
+                    <div class="bar-status">
+                        <div class="bar" id="js-stats-speed"></div>
+                        <ul class="separator">
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                            <li></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    box.insertAdjacentHTML('beforeend', leftContent);
+    box.insertAdjacentHTML('beforeend', rightContent);
+
+    return modal;
 }
 
 getPokemonsTotalCount('https://pokeapi.co/api/v2/pokemon');
